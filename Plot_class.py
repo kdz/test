@@ -1,14 +1,20 @@
 __author__ = 'kdsouza'
 
+from pyface.qt import QtGui, QtCore
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = 'qt4'
 
 from traits.api import HasTraits, Str, Instance, Button, List, Any, Property, Dict, cached_property
-from traitsui.api import View, Item, CheckListEditor, TableEditor, ObjectColumn
+from traitsui.api import View, Group, Item, CheckListEditor, TableEditor, ObjectColumn, InstanceEditor, HSplit
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib as mpl
+from matplotlib.figure import Figure
 import seaborn as sns
 
-# pd.DataFrame.plot() kwargs by plot kind
+from MPL_pyqt_mergewidget import *
+from matplotlib.widgets import RectangleSelector
+
+# pd.DataFrame.update_plot() kwargs by update_plot kind
 KIND_KWARGS = {
     'Line': {'kind': 'line',
              'title': "",
@@ -72,8 +78,9 @@ class Plot(HasTraits):
     # keys and values for TableEditor
     kwargs = Property(List(Kwarg), depends_on='kind_dict')
     # widget
-    plot = Button
+    update_plot = Button
     view = Instance(View)
+    fig = Instance(Figure)
 
     @cached_property
     def _get_kind_dict(self):
@@ -83,20 +90,37 @@ class Plot(HasTraits):
     def _get_kwargs(self):
         return [Kwarg(key=key, val=self.kind_dict[key]) for key in self.kind_dict]
 
-    traits_View = View(Item(name='kind', editor=CheckListEditor(values=sorted(KIND_KWARGS.keys()))),
-                       Item(name='kwargs', editor=kwarg_editor, show_label=False),
-                       Item(name='plot', show_label=False),
-                       title='Plot Editor'
-                       )
-
-    def _plot_fired(self):
-        """Creates plt figure based on current plot attributes"""
-        kws = self.kwargs
-        pdkwargs = {kw.key: kw.val for kw in kws}
-        self.dataframe.plot(**pdkwargs)     # uncomment to generate plots
-        plt.show()
 
 
-# configure seaborn plot appearance
+# configure seaborn update_plot appearance
 sns.despine()
 sns.set_style('whitegrid')
+
+
+class Main(HasTraits):
+
+    plot = Instance(Plot)
+    figure = Instance(Figure, ())
+    view = Instance(View)
+    update_plot = Button
+
+    def __init__(self):
+        super(Main, self).__init__()
+        self.axes = self.figure.add_subplot(111)
+        self.axes.plot(10, 2)
+        print(self.axes)
+
+    def mpl_setup(self):
+        def onselect(eclick, erelease):
+            print "eclick: {}, erelease: {}".format(eclick, erelease)
+
+        self.rs = RectangleSelector(self.axes, onselect,
+                                    drawtype='box', useblit=True)
+
+    def _update_plot_fired(self):
+        """Updates mpl axes based on current plot attributes"""
+        kws = self.plot.kwargs
+        pdkwargs = {kw.key: kw.val for kw in kws}
+        self.axes.clear()
+        self.axes = self.plot.dataframe.plot(**pdkwargs)
+        print(self.axes)
