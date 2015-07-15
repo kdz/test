@@ -1,20 +1,16 @@
 __author__ = 'kdsouza'
 
-from pyface.qt import QtGui, QtCore
-from traits.etsconfig.api import ETSConfig
-ETSConfig.toolkit = 'qt4'
-
-from traits.api import HasTraits, Str, Instance, Button, List, Any, Property, Dict, cached_property, on_trait_change
-from traitsui.api import View, Group, Item, CheckListEditor, TableEditor, ObjectColumn, InstanceEditor, HSplit
+from traits.api import HasTraits, Str, Instance, Button, List, Any, Property, Dict, \
+    cached_property, on_trait_change, property_depends_on
+from traitsui.api import View, TableEditor, ObjectColumn
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import seaborn as sns
 
-from MPL_pyqt_mergewidget import *
-from matplotlib.widgets import RectangleSelector
 
-# pd.DataFrame.update_plot() kwargs by update_plot kind
+
+# pd.DataFrame.keep_plot() kwargs by kind
 KIND_KWARGS = {
     'Line': {'kind': 'line',
              'title': "",
@@ -55,7 +51,7 @@ KIND_KWARGS = {
 
 
 class Kwarg(HasTraits):
-    """Row in TableEditor."""
+    """A row in TableEditor."""
     key = Str
     val = Any
 
@@ -68,44 +64,73 @@ kwarg_editor = TableEditor(
 
 
 class Plot(HasTraits):
+    """
+    Container for pd.dataframe, plot information, and MPL figure.
+    View merges MPL canvas and TraitsUI widget.
+    Canvas clears and re-displays on button press.
+
+
+    """
     # pd.DataFrame data source
     dataframe = Instance(pd.DataFrame)
-    # changing kind triggers notification that updates kind_dict
     kind = Str('Line')
-    # tracks current kwargs dict
     kind_dict = Property(Dict, depends_on='kind')
     # keys and values for TableEditor
     kwargs = Property(List(Kwarg), depends_on='kind_dict')
-    # widget
-    update_plot = Button
+
+    # widget attributes
+    keep_plot = Button
+    update_preview = Button
     view = Instance(View)
     figure = Instance(Figure, ())
+    # preview_axes = Property(Instance(Axes))
 
     def __init__(self):
+        """Initialize with subplots"""
         super(Plot, self).__init__()
-        self.axes = self.figure.add_subplot(111)
-        print(self.figure.axes)
+        self.static_axes = self.figure.add_subplot(212)
+        self.preview_axes = self.figure.add_subplot(211)
 
-    @cached_property
-    def _get_kind_dict(self):
-        return KIND_KWARGS[self.kind]
-
-    @cached_property
-    def _get_kwargs(self):
-        return [Kwarg(key=key, val=self.kind_dict[key]) for key in self.kind_dict]
-
-    @on_trait_change('update_plot')
-    def plot(self):
+    def plot(self, axes):
+        """Clears and updates given axes with plot using current kwargs"""
+        axes.cla()
         kws = self.kwargs
         pdkwargs = {kw.key: kw.val for kw in kws}
-        self.figure.clear()
-        self.axes = self.figure.add_subplot(111)
-        axes = self.figure.axes[0]
         self.dataframe.plot(ax=axes, **pdkwargs)
         self.figure.canvas.draw()
 
+    @cached_property
+    def _get_kind_dict(self):
+        """Updates kind_dict based on kind selection."""
+        return KIND_KWARGS[self.kind]
 
-# configure seaborn update_plot appearance
+    @cached_property      # how to update kwargs when edited in UI? so preview may update
+    def _get_kwargs(self):
+        """Updates kwarg display on kind selection."""
+        return [Kwarg(key=key, val=self.kind_dict[key]) for key in self.kind_dict]
+
+    @on_trait_change('kwargs')
+    def replot_preview(self):
+        """
+        Updates preview when kwargs is updated, which is only when kind is changed.
+        Since kwargs is a cached property, edits in the UI window do not trigger udpate.
+        Same lack of update when kwargs is a Property using @property_depends_on('kind_dict', settable=True).
+        Does not update.
+
+        """
+        self.plot(self.preview_axes)
+
+    def _keep_plot_fired(self):
+        """Updates static plot with current kwargs, on button press."""
+        self.plot(self.static_axes)
+
+    def _update_preview_fired(self):
+        """Updates preview plot with current kwargs, on button press."""
+        self.plot(self.preview_axes)
+
+
+# configure seaborn keep_plot appearance
 sns.despine()
-sns.set_style('whitegrid')
+sb_dark = sns.dark_palette("skyblue", 8, reverse=True)
+sns.set(palette=sb_dark, style='whitegrid')
 

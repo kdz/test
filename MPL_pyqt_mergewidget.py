@@ -17,6 +17,7 @@ from traitsui.api import Handler
 # embedding widget editor
 
 class _MPLFigureEditor(Editor):
+    """Editor to display MPL figure in TraitsUI View."""
 
     scrollable = True
 
@@ -28,7 +29,7 @@ class _MPLFigureEditor(Editor):
         pass
 
     def _create_canvas(self, parent):
-        """Creates MPL canvas"""
+        """Creates MPL canvas."""
         mpl_canvas = FigureCanvas(self.value)
         return mpl_canvas
 
