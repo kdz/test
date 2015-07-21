@@ -2,7 +2,7 @@ __author__ = 'kdsouza'
 
 from SpecNode import *
 
-################ test receiver data pulling
+#=================  test receiver data pulling ===================
 
 ## This opens a UI, which we do not need to do
 # receiver = load_data(filename='/Users/kdsouza/Desktop/Projects/pandas_play/weather_year.csv')
@@ -15,14 +15,26 @@ class Receiver(HasTraits):
     selection = Instance(DataFrameSelection)
 
 
-test_receiver = Receiver(selection=DataFrameSelection( [], [weather_data['EDT'], weather_data['Mean TemperatureF']], [] ))
+test_receiver = Receiver(
+    selection=DataFrameSelection([],
+                                 [weather_data['EDT'],
+                                  weather_data['Mean TemperatureF']],
+                                 []))
 
 
 x, y = get_x_y(test_receiver)
 from pandas.util.testing import assert_series_equal
 assert_series_equal(x, weather_data['EDT'])
 
-############### test SpecNode initialization and view
+
+#====================== test pure functions ========================
+
+
+
+
+
+
+#============= test SpecNode initialization and view ===============
 
 sample_dict = {
     'a': Range(0, 100),
@@ -43,16 +55,16 @@ assert isinstance(sample_specs.d, SpecNode)
 
 # check convert_to_items
 # print(sample_specs.convert_to_items())
-# sample_specs.configure_traits()
+# sample_specs.configure_traits()   # uncomment for interactive NodeSpec View
 
 
 # assert get_item_editor(range(5)) == CheckListEditor(values=[0, 1, 2, 3, 4])
 # assert get_item_editor(10) == TextEditor(auto_set=False, enter_set=True)
 
 
-########### test PlotLayout Initialization and View
+#============== test PlotLayout Initialization and View ===============
 
 layout = PlotLayout(spec_nodes=sample_specs)
 
-# layout.figure.add_subplot(111)
-# layout.configure_traits()
+# layout.figure.add_subplot(111)   # uncomment to view empty grid
+# layout.configure_traits()     # uncomment for interactive Layout view
