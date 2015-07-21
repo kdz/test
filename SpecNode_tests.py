@@ -25,14 +25,13 @@ assert_series_equal(x, weather_data['EDT'])
 ############### test Node operations
 
 sample_dict = {
-    'a': Int(10),
+    'a': Range(15),
     'b': Bool(True),
     'c': List([7, 8, 9]),
     'd': {
         'sub_a': Bool(False),
         'sub_b': Str('sub_b_val')
     }
-
 }
 
 

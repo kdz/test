@@ -67,6 +67,8 @@ class SpecNode(HasTraits):    # <- just inherit from Dict?
         for attr, val in self.__dict__.items():
             if isinstance(val, SpecNode):
                 items.append(Item(attr, editor=InstanceEditor(), style='custom'))
+            elif isinstance(val, int):
+                items.append(Item(attr))
             else:
                 items.append(Item(attr, editor=tap(get_item_editor(val), 'converting item_editor')))
         return items
