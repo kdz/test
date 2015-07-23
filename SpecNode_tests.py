@@ -1,70 +1,33 @@
 __author__ = 'kdsouza'
 
-from SpecNode import *
+from Spec import *
 
-#=================  test receiver data pulling ===================
+def test_merge():
+    assert merge_spec(1, 2) == 1
+    assert merge_spec(VEdit(True, BooleanEditor),
+                      VEdit(False, BooleanEditor)) == VEdit(True, BooleanEditor)
+    assert merge_spec({'a': 10, 'b': False},
+                      {'b': False, 'c': [1, 2, 3]}) == {'a': 10, 'b': False, 'c': [1, 2, 3]}
 
-## This opens a UI, which we do not need to do
-# receiver = load_data(filename='/Users/kdsouza/Desktop/Projects/pandas_play/weather_year.csv')
+    def my_func(receiver):
+        pass
 
-weather_data = pd.read_csv("/Users/kdsouza/Desktop/Projects/pandas_play/weather_year.csv")
-DataFrameSelection = namedtuple('DataFrameSelection', 'rows, cols, items')
+    def my_func_2(receiver):
+        pass
 
-class Receiver(HasTraits):
-    """Mock Receiver class to avert side effects"""
-    selection = Instance(DataFrameSelection)
-
-
-test_receiver = Receiver(
-    selection=DataFrameSelection([],
-                                 [weather_data['EDT'],
-                                  weather_data['Mean TemperatureF']],
-                                 []))
+    assert callable(merge_spec(my_func, my_func_2))
+    assert merge_spec(('a', VEdit('a', CheckListEditor)),
+                      ([1, 2], VEdit('c', CheckListEditor), {})) == ('a', VEdit('a', CheckListEditor), {})
 
 
-x, y = get_x_y(test_receiver)
-from pandas.util.testing import assert_series_equal
-assert_series_equal(x, weather_data['EDT'])
+def test_set_and_get_spec():
 
+    spec = Spec({'a': 10,
+                 'b': {'b1': VEdit(10, RangeEditor()),
+                       'b2': VEdit(True, BooleanEditor()),
+                       'b3': {'b31': False,
+                              'b32': None}
+                       }
+                 })
 
-#====================== test pure functions ========================
-
-
-
-
-
-
-#============= test SpecNode initialization and view ===============
-
-sample_dict = {
-    'a': Range(0, 100),
-    'b': Bool(True),
-    'c': List([7, 8, 9]),
-    'd': {
-        'sub_a': Bool(False),
-        'sub_b': Str('sub_b_val'),
-        'sub_dict': {'sub_sub_a': Float(.05),
-                     'sub_sub_b': Str
-                     }
-    }
-}
-
-
-sample_specs = SpecNode(sample_dict)
-assert isinstance(sample_specs.d, SpecNode)
-
-# check convert_to_items
-# print(sample_specs.convert_to_items())
-# sample_specs.configure_traits()   # uncomment for interactive NodeSpec View
-
-
-# assert get_item_editor(range(5)) == CheckListEditor(values=[0, 1, 2, 3, 4])
-# assert get_item_editor(10) == TextEditor(auto_set=False, enter_set=True)
-
-
-#============== test PlotLayout Initialization and View ===============
-
-layout = PlotLayout(spec_nodes=sample_specs)
-
-# layout.figure.add_subplot(111)   # uncomment to view empty grid
-# layout.configure_traits()     # uncomment for interactive Layout view
+    assert 1 == 1
